@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Timer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body,
+      html {
+        height: 100%;
+        font-family: Arial, sans-serif;
+      }
+
+      .background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("./background.webp") no-repeat center center;
+        background-size: cover;
+        z-index: -1;
+      }
+
+      .container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none; /* Initially hidden */
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .timer {
+        font-size: 24px;
+        color: rgba(255, 255, 255, 0.7); /* Subtle timer text */
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .info {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.5); /* Subtle longest duration text */
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .reset-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .reset-button:hover {
+        background-color: rgba(0, 0, 0, 0.9);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background"></div>
+    <div class="container" id="container">
+      <div class="timer" id="timer">00:00</div>
+      <button class="reset-button" onclick="resetTimer()">Reset Timer</button>
+      <div class="info" id="longest">Longest Duration: 00:00</div>
+    </div>
+
+    <script>
+      let seconds = 0;
+      let timerInterval;
+      let focusStartTime;
+      let longestDuration = 0;
+
+      const container = document.getElementById("container");
+
+      function startTimer() {
+        focusStartTime = Date.now();
+        timerInterval = setInterval(() => {
+          seconds += 120; // Increment every 2 minutes
+          updateTimerDisplay();
+        }, 120000); // 2 minutes in milliseconds
+      }
+
+      function stopTimer() {
+        clearInterval(timerInterval);
+
+        // Calculate the focus session duration
+        const focusDuration = Math.floor((Date.now() - focusStartTime) / 1000);
+        if (focusDuration > longestDuration) {
+          longestDuration = focusDuration;
+          updateLongestDurationDisplay();
+        }
+      }
+
+      function resetTimer() {
+        stopTimer();
+        seconds = 0;
+        updateTimerDisplay();
+        startTimer();
+      }
+
+      function updateTimerDisplay() {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById("timer").textContent = `${String(
+          minutes
+        ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function updateLongestDurationDisplay() {
+        const minutes = Math.floor(longestDuration / 60);
+        const secs = longestDuration % 60;
+        document.getElementById(
+          "longest"
+        ).textContent = `Longest Duration: ${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(secs).padStart(2, "0")}`;
+      }
+
+      // Show container when mouse enters the window, hide when it leaves
+      document.addEventListener("mousemove", (e) => {
+        if (!container.style.display || container.style.display === "none") {
+          console.log("Mouse detected in window. Showing timer.");
+          container.style.display = "flex";
+        }
+      });
+
+      document.addEventListener("mouseleave", () => {
+        console.log("Mouse left window. Hiding timer.");
+        container.style.display = "none";
+      });
+
+      // Detect visibility change
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          stopTimer();
+          seconds = 0; // Reset timer
+          updateTimerDisplay();
+        } else if (document.visibilityState === "visible") {
+          startTimer();
+        }
+      });
+
+      // Initialize the app
+      window.onload = () => {
+        console.log("App initialized.");
+        startTimer();
+      };
+    </script>
+  </body>
+</html>
