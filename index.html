@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Focus Timer</title>
+    <title>Distraction Timer</title>
     <style>
       * {
         margin: 0;
@@ -14,7 +14,11 @@
       body,
       html {
         height: 100%;
+        width: 100%;
         font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       .background {
@@ -29,13 +33,13 @@
       }
 
       .container {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        display: none; /* Initially hidden */
+        position: relative; /* Add this to position the list relative to the container */
+        height: 100%;
+        width: 100%;
+        display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 10px;
       }
 
@@ -49,6 +53,7 @@
         font-size: 16px;
         color: rgba(255, 255, 255, 0.5); /* Subtle longest duration text */
         text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        margin-top: 10px;
       }
 
       .reset-button {
@@ -64,6 +69,17 @@
       .reset-button:hover {
         background-color: rgba(0, 0, 0, 0.9);
       }
+
+      #focus-durations-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+
+      /* Add this CSS rule to remove the bullet points */
+      #focus-duration-times li {
+        list-style-type: none;
+      }
     </style>
   </head>
   <body>
@@ -71,7 +87,10 @@
     <div class="container" id="container">
       <div class="timer" id="timer">00:00</div>
       <button class="reset-button" onclick="resetTimer()">Reset Timer</button>
-      <div class="info" id="longest">Longest Duration: 00:00</div>
+      <div class="info" id="longest">Record: 00:00</div>
+      <div id="focus-durations-container">
+        <ul id="focus-duration-times"></ul>
+      </div>
     </div>
 
     <script>
@@ -79,15 +98,16 @@
       let timerInterval;
       let focusStartTime;
       let longestDuration = 0;
+      let focusDurations = [];
 
       const container = document.getElementById("container");
 
       function startTimer() {
         focusStartTime = Date.now();
         timerInterval = setInterval(() => {
-          seconds += 120; // Increment every 2 minutes
+          seconds++;
           updateTimerDisplay();
-        }, 120000); // 2 minutes in milliseconds
+        }, 1000);
       }
 
       function stopTimer() {
@@ -99,13 +119,41 @@
           longestDuration = focusDuration;
           updateLongestDurationDisplay();
         }
+        focusDurations.push(focusDuration);
+
+        // Keep only the last 20 focus durations
+        if (focusDurations.length > 20) {
+          focusDurations.shift();
+        }
+
+        updateFocusDurationsDisplay();
       }
 
       function resetTimer() {
         stopTimer();
+        focusDurations = [];
         seconds = 0;
+        longestDuration = 0;
+        updateFocusDurationsDisplay();
+        updateLongestDurationDisplay();
         updateTimerDisplay();
         startTimer();
+      }
+
+      function updateFocusDurationsDisplay() {
+        const resetTimesList = document.getElementById("focus-duration-times");
+        resetTimesList.innerHTML = focusDurations
+          .slice() // Create a shallow copy of the array
+          .reverse() // Reverse the array to display newest first
+          .map((duration) => {
+            const minutes = Math.floor(duration / 60);
+            const secs = duration % 60;
+            return `<li class="info">${String(minutes).padStart(
+              2,
+              "0"
+            )}:${String(secs).padStart(2, "0")}</li>`;
+          })
+          .join("");
       }
 
       function updateTimerDisplay() {
@@ -119,12 +167,9 @@
       function updateLongestDurationDisplay() {
         const minutes = Math.floor(longestDuration / 60);
         const secs = longestDuration % 60;
-        document.getElementById(
-          "longest"
-        ).textContent = `Longest Duration: ${String(minutes).padStart(
-          2,
-          "0"
-        )}:${String(secs).padStart(2, "0")}`;
+        document.getElementById("longest").textContent = `Record: ${String(
+          minutes
+        ).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
       }
 
       // Show container when mouse enters the window, hide when it leaves
